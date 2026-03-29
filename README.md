@@ -25,12 +25,30 @@ Open [http://localhost:5173](http://localhost:5173).
 | Variable | Required | Description |
 |---|---|---|
 | `VITE_ANTHROPIC_API_KEY` | For AI guide | Anthropic API key for Stella (the AI guide) |
+| `STITCH_API_KEY` | For Stitch MCP | API key created in Stitch settings for the Google Stitch MCP server |
+| `GITHUB_TOKEN` | Optional for React Bits MCP | Raises GitHub API limits used by the React Bits MCP server |
 
 Create a `.env.local` file in the project root:
 
 ```
 VITE_ANTHROPIC_API_KEY=your-key-here
 ```
+
+If you want the repo-local MCP servers to work, also export:
+
+```bash
+export STITCH_API_KEY=your-stitch-api-key
+export GITHUB_TOKEN=your-github-token
+```
+
+## MCP Servers
+
+This repo includes project-local MCP config in `.mcp.json` and `.cursor/mcp.json`.
+
+- `stitch` uses Google's hosted MCP endpoint at `https://stitch.googleapis.com/mcp` and expects `STITCH_API_KEY`.
+- `reactbits` runs `npx reactbits-dev-mcp-server` and can use `GITHUB_TOKEN` to avoid low unauthenticated GitHub API limits.
+
+`reactbits` is community-maintained. `stitch` is Google's official Stitch MCP endpoint.
 
 ## Stack
 
