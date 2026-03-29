@@ -1,0 +1,121 @@
+export const MAX_GRAPH_NODES = 200
+export const MISSION_NODE_COUNT = 7
+export const MAX_EXOPLANET_NODES = MAX_GRAPH_NODES - MISSION_NODE_COUNT
+
+export const missionNodes = [
+  {
+    id: 'kepler',
+    type: 'mission',
+    name: 'Kepler',
+    agency: 'NASA',
+    launchYear: 2009,
+    status: 'Retired (2018)',
+    method: 'Transit photometry',
+    discoveryCount: 2709,
+    contribution: 'Revealed that planets are common in our galaxy by staring at one patch of sky for years, catching tiny dips in starlight.',
+  },
+  {
+    id: 'tess',
+    type: 'mission',
+    name: 'TESS',
+    agency: 'NASA',
+    launchYear: 2018,
+    status: 'Active',
+    method: 'Transit photometry',
+    discoveryCount: 540,
+    contribution: 'Surveying the entire sky for nearby transiting exoplanets, finding the best targets for follow-up study.',
+  },
+  {
+    id: 'jwst',
+    type: 'mission',
+    name: 'JWST',
+    agency: 'NASA / ESA / CSA',
+    launchYear: 2021,
+    status: 'Active',
+    method: 'Transit spectroscopy / Direct imaging',
+    discoveryCount: 12,
+    contribution: 'First telescope capable of analyzing exoplanet atmospheres in detail, looking for signs of habitability.',
+  },
+  {
+    id: 'hubble',
+    type: 'mission',
+    name: 'Hubble',
+    agency: 'NASA / ESA',
+    launchYear: 1990,
+    status: 'Active',
+    method: 'Transit spectroscopy / Imaging',
+    discoveryCount: 50,
+    contribution: 'First telescope to detect an exoplanet atmosphere and characterize atmospheric composition from space.',
+  },
+  {
+    id: 'corot',
+    type: 'mission',
+    name: 'CoRoT',
+    agency: 'ESA / CNES',
+    launchYear: 2006,
+    status: 'Retired (2013)',
+    method: 'Transit photometry',
+    discoveryCount: 32,
+    contribution: 'First space mission dedicated to detecting transiting exoplanets, blazing the trail for Kepler.',
+  },
+  {
+    id: 'harps',
+    type: 'mission',
+    name: 'HARPS (Ground-based)',
+    agency: 'ESO',
+    launchYear: 2003,
+    status: 'Active',
+    method: 'Radial velocity',
+    discoveryCount: 130,
+    contribution: 'The most precise planet-hunting spectrograph on Earth, detecting the wobble of stars tugged by unseen worlds.',
+  },
+  {
+    id: 'spitzer',
+    type: 'mission',
+    name: 'Spitzer',
+    agency: 'NASA',
+    launchYear: 2003,
+    status: 'Retired (2020)',
+    method: 'Infrared photometry / Transit',
+    discoveryCount: 7,
+    contribution: 'Infrared eyes revealed the TRAPPIST-1 system in stunning detail and measured exoplanet temperatures.',
+  },
+]
+
+export const missionDiscoverySources = [
+  {
+    id: 'kepler',
+    label: 'Kepler',
+    filter: "disc_facility = 'Kepler'",
+  },
+  {
+    id: 'tess',
+    label: 'TESS',
+    filter: "disc_facility = 'Transiting Exoplanet Survey Satellite (TESS)'",
+  },
+  {
+    id: 'jwst',
+    label: 'JWST',
+    filter: "disc_facility = 'James Webb Space Telescope (JWST)'",
+  },
+  {
+    id: 'hubble',
+    label: 'Hubble',
+    filter: "disc_facility = 'Hubble Space Telescope'",
+  },
+  {
+    id: 'corot',
+    label: 'CoRoT',
+    filter: "disc_facility = 'CoRoT'",
+  },
+  {
+    id: 'harps',
+    label: 'HARPS',
+    filter: "lower(disc_instrument) like '%harps%'",
+  },
+  {
+    id: 'spitzer',
+    label: 'Spitzer',
+    filter: "disc_facility = 'Spitzer Space Telescope'",
+  },
+]

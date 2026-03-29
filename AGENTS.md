@@ -7,9 +7,9 @@
 
 ## Project Summary
 
-**Cosmos** is a React 19 + Vite single-page application that visualizes NASA exoplanet and mission data as a force-directed graph, paired with an AI guide (Stella) powered by the Anthropic Claude API. Dark space theme, canvas-based rendering, no backend.
+**Cosmos** is a React 19 + Vite single-page application that visualizes NASA exoplanet and mission data as a force-directed graph, paired with an AI guide (Stella) powered by the Google Gemini API. Dark space theme, canvas-based rendering, no backend.
 
-**Stack:** React 19, Vite 8, react-force-graph-2d, d3-force, Anthropic Claude API (Sonnet), plain CSS, Google Fonts (Instrument Serif, DM Mono).
+**Stack:** React 19, Vite 8, react-force-graph-2d, d3-force, Google Gemini API, plain CSS, Google Fonts (Instrument Serif, DM Mono).
 
 ---
 
@@ -58,7 +58,7 @@ cosmos/
 | Static/curated data | `src/data/` | JSON-like JS exports, no runtime fetches for core data |
 | Pure utility functions | `src/utils/` | No React imports, no side effects |
 | Hooks | `src/hooks/` | Custom React hooks, `use` prefix |
-| API integration | `src/api/` or `src/services/` | Anthropic API calls, message formatting |
+| API integration | `src/api/` or `src/services/` | Gemini API calls, message formatting |
 | Styles | Co-located `.css` files or `src/App.css` | No CSS modules yet; plain CSS |
 | Tests | `src/__tests__/` or co-located `*.test.jsx` | Mirror source structure |
 | Feature docs | `docs/features/` | One file per shipped feature |
@@ -164,7 +164,7 @@ A task is complete when ALL of these are true:
 - Lazy-load heavy components (`React.lazy` + `Suspense`).
 
 ### API Integration
-- Anthropic API calls go through a single service module, not scattered in components.
+- Gemini API calls go through a single service module, not scattered in components.
 - Never send API requests on every render or keystroke — debounce.
 - Include conversation context efficiently; do not send the entire chat history if truncation is possible.
 - Handle rate limits and errors with user-visible feedback.

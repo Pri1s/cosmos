@@ -2,8 +2,10 @@ import { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import ForceGraph2D from 'react-force-graph-2d'
 import { forceCollide } from 'd3-force'
 import { nodes as sourceNodes, links as sourceLinks, getNeighborIds } from '../data/graph-data'
-import { drawNode, drawLink, drawStars, drawNebulae } from '../utils/render-helpers'
-import { assignSpiralPositions, forceSpiralShape } from '../utils/spiral-layout'
+import { drawNode, drawLink, drawStars, drawNebulae, drawSceneStructure } from '../utils/render-helpers'
+import { assignSpiralPositions, assignLinkOrbitMetrics, forceSpiralShape } from '../utils/spiral-layout'
+import { buildGraphSceneDetails } from '../utils/graph-scene'
+import { getSafeViewportCenter } from '../utils/floating-panels'
 
 function cloneGraphData() {
   const data = {
@@ -11,6 +13,7 @@ function cloneGraphData() {
     links: sourceLinks.map(l => ({ ...l })),
   }
   assignSpiralPositions(data.nodes, data.links)
+  assignLinkOrbitMetrics(data.nodes, data.links)
   return data
 }
 
@@ -23,47 +26,74 @@ export default function BrainMap({
   onBackgroundClick,
   onGraphReady,
   width,
+  height,
+  presentationMode = 'map',
+  occlusionRect = null,
 }) {
   const fgRef = useRef()
   const [graphData] = useState(cloneGraphData)
-  const [height, setHeight] = useState(window.innerHeight)
-
-  useEffect(() => {
-    const handleResize = () => setHeight(window.innerHeight)
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+  const sceneDetails = useMemo(
+    () => buildGraphSceneDetails(graphData.nodes, graphData.links),
+    [graphData.links, graphData.nodes]
+  )
+  const isMapMode = presentationMode === 'map'
 
   useEffect(() => {
     if (fgRef.current) {
       onGraphReady(fgRef.current)
 
       // Configure d3-force for spiral galaxy shape
-      fgRef.current.d3Force('charge').strength(-30)
-      fgRef.current.d3Force('link').distance(20)
+      fgRef.current.d3Force('charge').strength(-26)
+      fgRef.current.d3Force('link').distance((link) => link.idealDistance ?? 24)
+      fgRef.current.d3Force('link').strength(0.22)
       fgRef.current.d3Force('center', null)
       fgRef.current.d3Force('x', null)
       fgRef.current.d3Force('y', null)
-      fgRef.current.d3Force('collide', forceCollide(8))
-      fgRef.current.d3Force('spiral', forceSpiralShape(graphData.nodes))
+      fgRef.current.d3Force('collide', forceCollide(7))
+      fgRef.current.d3Force('spiral', forceSpiralShape(graphData.nodes, 1.1))
 
       // Zoom to fit after physics settles
       setTimeout(() => {
         fgRef.current?.zoomToFit(600, 60)
       }, 800)
     }
-  }, [onGraphReady])
+  }, [graphData.nodes, onGraphReady])
+
+  // Pause/resume animation based on focus mode
+  useEffect(() => {
+    if (!fgRef.current) return
+    if (presentationMode === 'enteringFocus' || presentationMode === 'focus') {
+      fgRef.current.pauseAnimation()
+    } else {
+      fgRef.current.resumeAnimation()
+    }
+  }, [presentationMode])
+
+  useEffect(() => {
+    if (!fgRef.current || !isMapMode) return
+    if (typeof fgRef.current.screen2GraphCoords !== 'function') return
+
+    const viewportWidth = width ?? window.innerWidth
+    const safeCenter = getSafeViewportCenter(viewportWidth, height, occlusionRect, 28)
+    const mirrorPoint = fgRef.current.screen2GraphCoords(
+      viewportWidth - safeCenter.x,
+      height - safeCenter.y
+    )
+
+    if (!Number.isFinite(mirrorPoint.x) || !Number.isFinite(mirrorPoint.y)) return
+    fgRef.current.centerAt(mirrorPoint.x, mirrorPoint.y, 250)
+  }, [height, isMapMode, occlusionRect, width])
 
   // Compute neighbor set for selected node
   const selectedNeighbors = useMemo(() => {
-    if (!selectedNode) return null
+    if (!selectedNode || !isMapMode) return null
     const neighbors = new Set(getNeighborIds(selectedNode.id))
     neighbors.add(selectedNode.id)
     return neighbors
-  }, [selectedNode])
+  }, [isMapMode, selectedNode])
 
   const nodeCanvasObject = useCallback((node, ctx, globalScale) => {
-    const isSelected = selectedNode?.id === node.id
+    const isSelected = isMapMode && selectedNode?.id === node.id
     const isNeighbor = selectedNeighbors?.has(node.id) && !isSelected
     const isDimmed =
       (selectedNeighbors && !selectedNeighbors.has(node.id)) ||
@@ -71,21 +101,27 @@ export default function BrainMap({
     const isHovered = hoveredNode?.id === node.id
 
     drawNode(ctx, node, globalScale, { isSelected, isNeighbor, isDimmed, isHovered })
-  }, [selectedNode, selectedNeighbors, hoveredNode, searchMatches])
+  }, [hoveredNode, isMapMode, searchMatches, selectedNeighbors, selectedNode])
 
   const linkCanvasObject = useCallback((link, ctx, globalScale) => {
     const sourceId = typeof link.source === 'object' ? link.source.id : link.source
     const targetId = typeof link.target === 'object' ? link.target.id : link.target
-    const isHighlighted = selectedNode && (sourceId === selectedNode.id || targetId === selectedNode.id)
+    const isHighlighted =
+      isMapMode &&
+      selectedNode &&
+      (sourceId === selectedNode.id || targetId === selectedNode.id)
     const isDimmed = selectedNeighbors && !isHighlighted
 
     drawLink(ctx, link, globalScale, { isHighlighted, isDimmed })
-  }, [selectedNode, selectedNeighbors])
+  }, [isMapMode, selectedNeighbors, selectedNode])
 
   const onRenderFramePre = useCallback((ctx, globalScale) => {
     drawStars(ctx, globalScale)
     drawNebulae(ctx, globalScale)
-  }, [])
+    drawSceneStructure(ctx, graphData.nodes, sceneDetails, globalScale, {
+      selectedNodeId: selectedNode?.id ?? null,
+    })
+  }, [graphData.nodes, sceneDetails, selectedNode?.id])
 
   const nodePointerAreaPaint = useCallback((node, color, ctx, globalScale) => {
     const r = (node.type === 'mission' ? 12 : 8) / globalScale
@@ -100,7 +136,7 @@ export default function BrainMap({
       ref={fgRef}
       graphData={graphData}
       width={width ?? window.innerWidth}
-      height={height}
+      height={height ?? window.innerHeight}
       backgroundColor="#06080d"
       nodeCanvasObject={nodeCanvasObject}
       nodeCanvasObjectMode={() => 'replace'}
@@ -113,7 +149,10 @@ export default function BrainMap({
       onRenderFramePre={onRenderFramePre}
       cooldownTicks={100}
       warmupTicks={50}
-      enableNodeDrag={true}
+      enableNodeDrag={isMapMode}
+      enablePanInteraction={isMapMode}
+      enableZoomInteraction={isMapMode}
+      enablePointerInteraction={isMapMode}
       nodeVal={node => node.type === 'mission' ? 4 : 1}
       d3AlphaDecay={0.02}
       d3VelocityDecay={0.3}
