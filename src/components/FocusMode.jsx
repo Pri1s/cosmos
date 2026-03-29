@@ -142,7 +142,6 @@ export default function FocusMode({
         isInteracting={panelInteracting}
       />
       <VoicePanel
-        key={`${node.id}:${selectedLens?.id ?? 'overview'}`}
         node={node}
         lens={selectedLens}
         neighbors={neighbors}

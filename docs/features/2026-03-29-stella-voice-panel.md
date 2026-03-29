@@ -14,6 +14,8 @@
 
 Focus mode now includes a third floating panel that presents Stella as a live narration channel with actual browser speech synthesis. The panel generates a story-style transcript for the selected node and currently active lens, speaks it aloud through the Web Speech API when supported, and starts underneath the node/lens panel so the right-side stack reads as a single inspection column.
 
+Later on 2026-03-29, the panel was tightened up so the waveform stretches across the console instead of sitting in a short fixed cluster, and active narration no longer resets when focus-mode interactions leave the spoken transcript unchanged.
+
 ## Motivation
 
 The existing focus-mode surfaces explained facts and offered chat, but they did not provide an authored-feeling narrative layer. The Stella voice panel fills that gap by giving the selected world or mission a stronger sense of storytelling and momentum.
@@ -49,6 +51,13 @@ What is included and what is explicitly excluded.
 - `src/utils/focus-panel-layout.js` — extended focus-mode layout to account for a third panel
 - `src/utils/focus-panel-layout.test.js` — updated coverage for the three-panel arrangement
 
+Follow-up stability pass:
+- `src/components/VoicePanel.jsx` — preserved speech playback across unchanged narration updates and only reset when the transcript string actually changed
+- `src/components/FocusMode.jsx` — removed an unnecessary remount key from the voice panel
+- `src/App.css` — made the waveform span the full voice-console width
+- `src/utils/voice-speech.js` — added a narration-change helper for playback reset decisions
+- `src/utils/voice-speech.test.js` — added coverage for unchanged-vs-changed narration reset behavior
+
 ### Architecture Impact
 
 None. The feature extends the current focus-mode/floating-panel architecture rather than introducing a new subsystem or service boundary.
@@ -73,9 +82,10 @@ No migration is required.
 ## Validation Performed
 
 - `npm run test`
+- `npx vitest run src/utils/voice-speech.test.js`
 - `npm run lint`
 - `npm run build`
-- Manual browser verification was not performed in this session
+- Manual browser verification was started but stopped at user request before completion
 
 ## Follow-Up Tasks
 

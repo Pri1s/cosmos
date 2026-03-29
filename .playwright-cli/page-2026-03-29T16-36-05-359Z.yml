@@ -1,0 +1,31 @@
+- generic [ref=e3]:
+  - generic [ref=e8]:
+    - img [ref=e9]
+    - textbox "Search planets and missions..." [ref=e12]
+    - generic [ref=e13]: /
+    - button "Guided Journey" [ref=e15] [cursor=pointer]:
+      - img [ref=e16]
+      - text: Guided Journey
+  - complementary [ref=e21]:
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]: AI Guide
+        - generic [ref=e25]:
+          - generic [ref=e26]: ✦
+          - generic [ref=e27]:
+            - generic [ref=e28]: Stella
+            - generic [ref=e29]: your guide
+      - button "Start journey" [ref=e31] [cursor=pointer]
+    - generic [ref=e34]:
+      - generic [ref=e35]: Stella
+      - paragraph [ref=e36]: Welcome to Cosmos — a living atlas of worlds beyond our solar system. I'm Stella, your guide. Start the guided journey to walk through the full catalog, or click any node and ask me what stands out.
+    - generic [ref=e37]:
+      - generic "Suggested prompts" [ref=e38]:
+        - button "Surprise me" [ref=e39] [cursor=pointer]
+        - button "Most habitable planet?" [ref=e40] [cursor=pointer]
+        - button "How do we find exoplanets?" [ref=e41] [cursor=pointer]
+      - generic [ref=e42]:
+        - textbox "Ask Stella anything..." [ref=e43]
+        - button "Send" [disabled] [ref=e44]:
+          - generic [ref=e45]: ↑
+    - button "Resize Stella panel" [ref=e46]

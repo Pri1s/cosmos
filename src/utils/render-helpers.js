@@ -257,7 +257,13 @@ export function shouldDrawNodeLabel(node, globalScale, {
   return globalScale > 2.5
 }
 
-export function drawNode(ctx, node, globalScale, { isSelected, isNeighbor, isDimmed, isHovered }) {
+export function drawNode(ctx, node, globalScale, {
+  isSelected,
+  isVisited,
+  isNeighbor,
+  isDimmed,
+  isHovered,
+}) {
   if (!Number.isFinite(node.x) || !Number.isFinite(node.y)) return
 
   const rgb = COLORS_RGB[node.type]
@@ -269,8 +275,8 @@ export function drawNode(ctx, node, globalScale, { isSelected, isNeighbor, isDim
   if (isDimmed) opacity = 0.12
 
   // Outer glow
-  const glowR = r * (isHovered ? 4.5 : isSelected ? 4 : 3)
-  const glowAlpha = (isHovered ? 0.25 : isSelected ? 0.22 : 0.12) * opacity
+  const glowR = r * (isHovered ? 4.5 : isSelected ? 4 : isVisited ? 3.4 : 3)
+  const glowAlpha = (isHovered ? 0.25 : isSelected ? 0.22 : isVisited ? 0.16 : 0.12) * opacity
   const grad = ctx.createRadialGradient(node.x, node.y, r * 0.5, node.x, node.y, glowR)
   grad.addColorStop(0, `rgba(${rgb}, ${glowAlpha})`)
   grad.addColorStop(1, `rgba(${rgb}, 0)`)
@@ -289,15 +295,26 @@ export function drawNode(ctx, node, globalScale, { isSelected, isNeighbor, isDim
     ctx.stroke()
   }
 
+  if (isVisited && !isSelected) {
+    const visitedRingOpacity = isDimmed ? 0.18 : isHovered ? 0.34 : 0.26
+    ctx.strokeStyle = `rgba(${rgb}, ${visitedRingOpacity})`
+    ctx.lineWidth = 0.95 / globalScale
+    ctx.beginPath()
+    ctx.arc(node.x, node.y, r * 1.85, 0, Math.PI * 2)
+    ctx.stroke()
+  }
+
   // Main fill
-  ctx.fillStyle = `rgba(${rgb}, ${0.9 * opacity})`
+  const fillAlpha = isVisited && !isDimmed ? 0.98 : 0.9
+  ctx.fillStyle = `rgba(${rgb}, ${fillAlpha * opacity})`
   ctx.beginPath()
   ctx.arc(node.x, node.y, r, 0, Math.PI * 2)
   ctx.fill()
 
   // Mission double-ring
   if (node.type === 'mission') {
-    ctx.strokeStyle = `rgba(${rgb}, ${0.5 * opacity})`
+    const missionRingAlpha = isVisited && !isSelected ? 0.64 : 0.5
+    ctx.strokeStyle = `rgba(${rgb}, ${missionRingAlpha * opacity})`
     ctx.lineWidth = 0.8 / globalScale
     ctx.beginPath()
     ctx.arc(node.x, node.y, r * 1.5, 0, Math.PI * 2)

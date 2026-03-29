@@ -19,6 +19,7 @@ function cloneGraphData() {
 
 export default function BrainMap({
   selectedNode,
+  visitedNodeIds = [],
   hoveredNode,
   searchMatches,
   onNodeClick,
@@ -39,6 +40,10 @@ export default function BrainMap({
   const nodeMap = useMemo(
     () => new Map(graphData.nodes.map(n => [n.id, n])),
     [graphData.nodes]
+  )
+  const visitedNodeIdSet = useMemo(
+    () => new Set(visitedNodeIds),
+    [visitedNodeIds]
   )
   const isMapMode = presentationMode === 'map'
 
@@ -98,14 +103,15 @@ export default function BrainMap({
 
   const nodeCanvasObject = useCallback((node, ctx, globalScale) => {
     const isSelected = isMapMode && selectedNode?.id === node.id
+    const isVisited = visitedNodeIdSet.has(node.id)
     const isNeighbor = selectedNeighbors?.has(node.id) && !isSelected
     const isDimmed =
       (selectedNeighbors && !selectedNeighbors.has(node.id)) ||
       (searchMatches && !searchMatches.has(node.id))
     const isHovered = hoveredNode?.id === node.id
 
-    drawNode(ctx, node, globalScale, { isSelected, isNeighbor, isDimmed, isHovered })
-  }, [hoveredNode, isMapMode, searchMatches, selectedNeighbors, selectedNode])
+    drawNode(ctx, node, globalScale, { isSelected, isVisited, isNeighbor, isDimmed, isHovered })
+  }, [hoveredNode, isMapMode, searchMatches, selectedNeighbors, selectedNode, visitedNodeIdSet])
 
   const linkCanvasObject = useCallback((link, ctx, globalScale) => {
     const sourceId = typeof link.source === 'object' ? link.source.id : link.source

@@ -19,6 +19,11 @@ import {
   getResponsiveFocusMetrics,
 } from './utils/focus-panel-layout'
 import { scaleViewportValue } from './utils/responsive-scale'
+import {
+  addVisitedNodeId,
+  readVisitedNodeIds,
+  writeVisitedNodeIds,
+} from './utils/visited-nodes'
 
 const FOCUS_ENTER_MS = 650
 const FOCUS_EXIT_MS = 420
@@ -146,6 +151,7 @@ export default function App() {
     () => getResponsiveAppMetrics(viewportWidth, viewportHeight, focusMetrics),
     [viewportWidth, viewportHeight, focusMetrics]
   )
+  const [visitedNodeIds, setVisitedNodeIds] = useState(() => readVisitedNodeIds())
   const [selectedNode, setSelectedNode] = useState(null)
   const [detailDismissing, setDetailDismissing] = useState(false)
   const [hoveredNode, setHoveredNode] = useState(null)
@@ -359,6 +365,14 @@ export default function App() {
 
   useEffect(() => () => clearTransitionTimer(), [clearTransitionTimer])
 
+  useEffect(() => {
+    writeVisitedNodeIds(visitedNodeIds)
+  }, [visitedNodeIds])
+
+  const rememberVisitedNode = useCallback((nodeId) => {
+    setVisitedNodeIds((currentNodeIds) => addVisitedNodeId(currentNodeIds, nodeId))
+  }, [])
+
   const getGraphNode = useCallback((node) => {
     if (!node) return null
     if (!graphRef || typeof graphRef.graphData !== 'function') return node
@@ -369,6 +383,7 @@ export default function App() {
     const activeNode = getGraphNode(node)
     if (!activeNode) return
 
+    rememberVisitedNode(activeNode.id)
     setHoveredNode(null)
     setSelectedNode(activeNode)
 
@@ -376,7 +391,7 @@ export default function App() {
       graphRef.centerAt(activeNode.x, activeNode.y, 500)
       graphRef.zoom(zoom, 500)
     }
-  }, [getGraphNode, graphRef])
+  }, [getGraphNode, graphRef, rememberVisitedNode])
 
   const getNodeOrigin = useCallback((node) => {
     if (graphRef && node?.x != null && node?.y != null) {
@@ -398,6 +413,7 @@ export default function App() {
 
     mapGuideRectRef.current = guideRect
     clearTransitionTimer()
+    rememberVisitedNode(activeNode.id)
     setSelectedNode(activeNode)
     setHoveredNode(null)
     setActiveLensId(activeNode.type === 'mission' ? 'mission-role' : 'discovery')
@@ -421,7 +437,7 @@ export default function App() {
       setViewMode('focus')
       transitionTimerRef.current = null
     }, FOCUS_ENTER_MS)
-  }, [clearTransitionTimer, getGraphNode, getNodeOrigin, graphRef, guideRect])
+  }, [clearTransitionTimer, getGraphNode, getNodeOrigin, graphRef, guideRect, rememberVisitedNode])
 
   const exitFocusMode = useCallback(() => {
     if (viewMode === 'map') return
@@ -571,6 +587,9 @@ export default function App() {
   })
   const journeyRunning = journey.status === 'active' || journey.status === 'paused'
   const showJourneyPanel = journeyPanelOpen
+  const mapVisitedNodeIds = useMemo(() => (
+    [...new Set([...visitedNodeIds, ...journey.visitedNodeIds])]
+  ), [journey.visitedNodeIds, visitedNodeIds])
 
   const handleStartJourney = useCallback(() => {
     startJourney()
@@ -644,6 +663,7 @@ export default function App() {
       >
         <BrainMap
           selectedNode={selectedNode}
+          visitedNodeIds={mapVisitedNodeIds}
           hoveredNode={hoveredNode}
           searchMatches={searchMatches}
           onNodeClick={handleNodeClick}
