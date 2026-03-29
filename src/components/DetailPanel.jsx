@@ -5,7 +5,7 @@ const COLORS = {
   mission: '#f76e5e',
 }
 
-export default function DetailPanel({ node, graphRef, onClose, maxX }) {
+export default function DetailPanel({ node, graphRef, onClose, closing, maxX, maxY }) {
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [visible, setVisible] = useState(false)
 
@@ -21,8 +21,8 @@ export default function DetailPanel({ node, graphRef, onClose, maxX }) {
     if (x + panelWidth > (maxX ?? window.innerWidth) - 16) {
       x = coords.x - panelWidth - 20
     }
-    if (y + panelHeight > window.innerHeight - 16) {
-      y = window.innerHeight - panelHeight - 16
+    if (y + panelHeight > (maxY ?? window.innerHeight) - 16) {
+      y = (maxY ?? window.innerHeight) - panelHeight - 16
     }
     if (y < 16) y = 16
     if (x < 16) x = 16
@@ -54,6 +54,7 @@ export default function DetailPanel({ node, graphRef, onClose, maxX }) {
     return () => window.removeEventListener('keydown', handleKey)
   }, [onClose])
 
+  const show = visible && !closing
   const color = COLORS[node.type]
 
   return (
@@ -62,8 +63,9 @@ export default function DetailPanel({ node, graphRef, onClose, maxX }) {
       style={{
         left: position.x,
         top: position.y,
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(8px)',
+        opacity: show ? 1 : 0,
+        transform: show ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.97)',
+        pointerEvents: closing ? 'none' : undefined,
       }}
     >
       <button className="detail-close" onClick={onClose}>×</button>

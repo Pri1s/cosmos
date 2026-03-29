@@ -58,6 +58,152 @@ export function drawNebulae(ctx) {
   }
 }
 
+function getNodeMap(nodes) {
+  return new Map(nodes.map((node) => [node.id, node]))
+}
+
+function getClusterRadius(missionNode, memberNodes) {
+  if (memberNodes.length === 0) return 18
+
+  const distances = memberNodes.map((node) => Math.hypot(node.x - missionNode.x, node.y - missionNode.y))
+  const averageDistance = distances.reduce((sum, value) => sum + value, 0) / distances.length
+  const furthestDistance = Math.max(...distances)
+  return Math.max(averageDistance * 0.86, furthestDistance * 0.58, 20)
+}
+
+function drawCurvedStroke(ctx, source, target, globalScale, {
+  alpha,
+  width,
+  color,
+  curveScale = 0.14,
+  curveBias = 1,
+}) {
+  const dx = target.x - source.x
+  const dy = target.y - source.y
+  const mx = (source.x + target.x) / 2
+  const my = (source.y + target.y) / 2
+  const dist = Math.hypot(dx, dy)
+  const offset = Math.min(dist * curveScale, 34) * curveBias
+  const nx = -dy / (dist || 1)
+  const ny = dx / (dist || 1)
+  const cpx = mx + nx * offset
+  const cpy = my + ny * offset
+
+  ctx.strokeStyle = typeof color === 'string'
+    ? (color.includes('rgba') ? color : `rgba(${color}, ${alpha})`)
+    : color
+  ctx.lineWidth = width / globalScale
+  ctx.beginPath()
+  ctx.moveTo(source.x, source.y)
+  ctx.quadraticCurveTo(cpx, cpy, target.x, target.y)
+  ctx.stroke()
+}
+
+export function drawSceneStructure(ctx, nodes, sceneDetails, globalScale, { selectedNodeId } = {}) {
+  if (!sceneDetails) return
+
+  const nodeMap = getNodeMap(nodes)
+
+  for (const bridge of sceneDetails.bridgeLinks) {
+    const sourceNode = nodeMap.get(bridge.sourceId)
+    const targetNode = nodeMap.get(bridge.targetId)
+    if (!sourceNode || !targetNode) continue
+
+    const gradient = ctx.createLinearGradient(sourceNode.x, sourceNode.y, targetNode.x, targetNode.y)
+    gradient.addColorStop(0, 'rgba(247, 110, 94, 0.08)')
+    gradient.addColorStop(0.45, 'rgba(181, 149, 175, 0.06)')
+    gradient.addColorStop(1, 'rgba(94, 196, 247, 0.08)')
+
+    drawCurvedStroke(ctx, sourceNode, targetNode, globalScale, {
+      alpha: 0.08,
+      width: 1.8,
+      color: gradient,
+      curveScale: bridge.curveScale,
+      curveBias: 1,
+    })
+  }
+
+  for (const cluster of sceneDetails.clusters) {
+    const missionNode = nodeMap.get(cluster.missionId)
+    const memberNodes = cluster.memberIds
+      .map((memberId) => nodeMap.get(memberId))
+      .filter((node) => Number.isFinite(node?.x) && Number.isFinite(node?.y))
+
+    if (!missionNode || memberNodes.length === 0) continue
+
+    const isActive = cluster.missionId === selectedNodeId || cluster.memberIds.includes(selectedNodeId)
+    const clusterRadius = getClusterRadius(missionNode, memberNodes)
+    const haloRadius = clusterRadius * 1.85
+    const halo = ctx.createRadialGradient(
+      missionNode.x,
+      missionNode.y,
+      clusterRadius * 0.3,
+      missionNode.x,
+      missionNode.y,
+      haloRadius
+    )
+    halo.addColorStop(0, `rgba(94, 196, 247, ${isActive ? 0.08 : 0.045})`)
+    halo.addColorStop(0.6, 'rgba(94, 196, 247, 0.018)')
+    halo.addColorStop(1, 'rgba(94, 196, 247, 0)')
+    ctx.fillStyle = halo
+    ctx.beginPath()
+    ctx.arc(missionNode.x, missionNode.y, haloRadius, 0, Math.PI * 2)
+    ctx.fill()
+
+    ctx.save()
+    ctx.setLineDash([10 / globalScale, 8 / globalScale])
+    for (let ringIndex = 0; ringIndex < cluster.ringCount; ringIndex += 1) {
+      const ringRadius = clusterRadius + (ringIndex * 9)
+      const startAngle = ((cluster.arcSeed % 360) * Math.PI / 180) + (ringIndex * 0.45)
+      const sweep = Math.PI * (1.08 + ((cluster.arcSeed + ringIndex) % 5) * 0.08)
+
+      ctx.strokeStyle = `rgba(94, 196, 247, ${isActive ? 0.26 : 0.11})`
+      ctx.lineWidth = (1 + (ringIndex * 0.22)) / globalScale
+      ctx.beginPath()
+      ctx.arc(missionNode.x, missionNode.y, ringRadius, startAngle, startAngle + sweep)
+      ctx.stroke()
+    }
+    ctx.restore()
+  }
+
+  for (const mesh of sceneDetails.meshLinks) {
+    const sourceNode = nodeMap.get(mesh.sourceId)
+    const targetNode = nodeMap.get(mesh.targetId)
+    if (!sourceNode || !targetNode) continue
+
+    const dx = targetNode.x - sourceNode.x
+    const dy = targetNode.y - sourceNode.y
+    const distance = Math.hypot(dx, dy)
+    if (distance > 90) continue
+
+    drawCurvedStroke(ctx, sourceNode, targetNode, globalScale, {
+      alpha: mesh.strength * 0.16,
+      width: 0.9,
+      color: '94, 196, 247',
+      curveScale: 0.08,
+      curveBias: Math.round(mesh.strength * 100) % 2 === 0 ? 1 : -1,
+    })
+  }
+}
+
+export function shouldDrawNodeLabel(node, globalScale, {
+  isSelected = false,
+  isNeighbor = false,
+  isHovered = false,
+} = {}) {
+  if (isSelected || isHovered) return true
+
+  if (node.type === 'mission') {
+    return globalScale > 1.02
+  }
+
+  if (isNeighbor) {
+    return globalScale > 1.85
+  }
+
+  return globalScale > 2.5
+}
+
 export function drawNode(ctx, node, globalScale, { isSelected, isNeighbor, isDimmed, isHovered }) {
   if (!Number.isFinite(node.x) || !Number.isFinite(node.y)) return
 
@@ -112,10 +258,23 @@ export function drawNode(ctx, node, globalScale, { isSelected, isNeighbor, isDim
   ctx.fill()
 
   // Label
-  const showLabel = isSelected || isHovered || isNeighbor || globalScale > 1.2
+  const showLabel = shouldDrawNodeLabel(node, globalScale, {
+    isSelected,
+    isNeighbor,
+    isHovered,
+  })
   if (showLabel) {
-    const fontSize = Math.max(3, (isSelected || isHovered ? 11 : 9) / globalScale)
-    const labelAlpha = (isSelected || isHovered ? 1 : isNeighbor ? 0.7 : 0.5) * opacity
+    const isMission = node.type === 'mission'
+    const fontSize = Math.max(3, ((isSelected || isHovered) ? 11 : isMission ? 9.5 : 8) / globalScale)
+    const labelAlpha = (
+      (isSelected || isHovered)
+        ? 1
+        : isMission
+          ? 0.74
+          : isNeighbor
+            ? 0.58
+            : 0.42
+    ) * opacity
     ctx.font = `${fontSize}px 'DM Mono', monospace`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'top'
@@ -155,7 +314,9 @@ export function drawLink(ctx, link, globalScale, { isHighlighted, isDimmed }) {
   const mx = (source.x + target.x) / 2
   const my = (source.y + target.y) / 2
   const dist = Math.sqrt(dx * dx + dy * dy)
-  const offset = Math.min(dist * 0.15, 20)
+  const curveScale = link.curveScale ?? 0.15
+  const curveBias = link.curveBias ?? 1
+  const offset = Math.min(dist * curveScale, 24) * curveBias
   const nx = -dy / (dist || 1)
   const ny = dx / (dist || 1)
   const cpx = mx + nx * offset

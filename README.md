@@ -19,19 +19,21 @@ Open [http://localhost:5173](http://localhost:5173).
 | `npm run build` | Production build to `dist/` |
 | `npm run preview` | Preview production build |
 | `npm run lint` | Run ESLint |
+| `npm run sync:nasa-data` | Refresh the capped NASA-backed graph dataset from the Exoplanet Archive |
+| `npm run test` | Run Vitest utility checks |
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |---|---|---|
-| `VITE_ANTHROPIC_API_KEY` | For AI guide | Anthropic API key for Stella (the AI guide) |
+| `VITE_GEMINI_API_KEY` | For AI guide | Gemini API key for Stella (the AI guide) |
 | `STITCH_API_KEY` | For Stitch MCP | API key created in Stitch settings for the Google Stitch MCP server |
 | `GITHUB_TOKEN` | Optional for React Bits MCP | Raises GitHub API limits used by the React Bits MCP server |
 
 Create a `.env.local` file in the project root:
 
 ```
-VITE_ANTHROPIC_API_KEY=your-key-here
+VITE_GEMINI_API_KEY=your-key-here
 ```
 
 If you want the repo-local MCP servers to work, also export:
@@ -54,7 +56,7 @@ This repo includes project-local MCP config in `.mcp.json` and `.cursor/mcp.json
 
 - **React 19** + **Vite 8** — SPA framework and build tool
 - **react-force-graph-2d** + **d3-force** — Force-directed graph rendering
-- **Anthropic Claude API** — AI guide (Stella) chatbot
+- **Google Gemini API** — AI guide (Stella) chatbot
 - **Plain CSS** — Styling (no Tailwind, no CSS modules)
 - **Google Fonts** — Instrument Serif (display), DM Mono (UI/data)
 
@@ -64,7 +66,7 @@ Two-panel layout:
 - **Left (~70%):** Interactive force-directed brain map (canvas-based)
 - **Right (~30%):** AI guide panel with chat, quick actions, and node info
 
-Data is curated and hardcoded (~25-30 nodes). No backend, no database. The AI guide uses client-side API calls to Anthropic Claude.
+Graph topology is mission-centered and capped at 200 total nodes for readability. Exoplanet nodes and mission discovery counts are synced from NASA's public Exoplanet Archive into static source files, so the app still ships with no backend and no runtime data dependency. Mission copy remains curated, and the AI guide uses client-side API calls to Google Gemini.
 
 See `PRD.md` for full product requirements.
 
