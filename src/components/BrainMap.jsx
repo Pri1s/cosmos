@@ -36,6 +36,10 @@ export default function BrainMap({
     () => buildGraphSceneDetails(graphData.nodes, graphData.links),
     [graphData.links, graphData.nodes]
   )
+  const nodeMap = useMemo(
+    () => new Map(graphData.nodes.map(n => [n.id, n])),
+    [graphData.nodes]
+  )
   const isMapMode = presentationMode === 'map'
 
   useEffect(() => {
@@ -117,11 +121,12 @@ export default function BrainMap({
 
   const onRenderFramePre = useCallback((ctx, globalScale) => {
     drawStars(ctx, globalScale)
-    drawNebulae(ctx, globalScale)
+    drawNebulae(ctx)
     drawSceneStructure(ctx, graphData.nodes, sceneDetails, globalScale, {
       selectedNodeId: selectedNode?.id ?? null,
+      nodeMap,
     })
-  }, [graphData.nodes, sceneDetails, selectedNode?.id])
+  }, [graphData.nodes, nodeMap, sceneDetails, selectedNode?.id])
 
   const nodePointerAreaPaint = useCallback((node, color, ctx, globalScale) => {
     const r = (node.type === 'mission' ? 12 : 8) / globalScale

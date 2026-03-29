@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react'
 import {
   clampPanelRect,
   getViewportBounds,
@@ -46,6 +46,12 @@ export default function useFloatingPanel({
   const { x, y, width, height } = initialRect
   const { width: minWidth, height: minHeight } = minSize
 
+  // Keep a ref to the latest rect so the resize handler doesn't need rect in its dep array
+  const rectRef = useRef(rect)
+  useLayoutEffect(() => {
+    rectRef.current = rect
+  })
+
   useEffect(() => {
     if (!enabled) return
     setRect(clampPanelRect({ x, y, width, height }, getBounds(padding), { width: minWidth, height: minHeight }))
@@ -55,12 +61,12 @@ export default function useFloatingPanel({
     if (!enabled) return
 
     const handleResize = () => {
-      setRect(clampPanelRect(rect, getBounds(padding), { width: minWidth, height: minHeight }))
+      setRect(clampPanelRect(rectRef.current, getBounds(padding), { width: minWidth, height: minHeight }))
     }
 
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [enabled, minHeight, minWidth, padding, rect])
+  }, [enabled, minHeight, minWidth, padding])
 
   const beginInteraction = useCallback((event, updater, interactionType) => {
     if (!enabled) return

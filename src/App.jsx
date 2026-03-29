@@ -6,6 +6,7 @@ import GuidePanel from './components/GuidePanel'
 import JourneyPanel from './components/JourneyPanel'
 import FocusMode from './components/FocusMode'
 import useFloatingPanel from './hooks/useFloatingPanel'
+import useViewportSize from './hooks/useViewportSize'
 import useGuidedJourney from './hooks/useGuidedJourney'
 import { nodes, links, getNeighborIds } from './data/graph-data'
 import { getFocusLenses } from './utils/focus-lenses'
@@ -136,10 +137,15 @@ function rectEquals(a, b) {
 }
 
 export default function App() {
-  const viewportWidth = window.innerWidth
-  const viewportHeight = window.innerHeight
-  const focusMetrics = getResponsiveFocusMetrics(viewportWidth, viewportHeight)
-  const appMetrics = getResponsiveAppMetrics(viewportWidth, viewportHeight, focusMetrics)
+  const [viewportWidth, viewportHeight] = useViewportSize()
+  const focusMetrics = useMemo(
+    () => getResponsiveFocusMetrics(viewportWidth, viewportHeight),
+    [viewportWidth, viewportHeight]
+  )
+  const appMetrics = useMemo(
+    () => getResponsiveAppMetrics(viewportWidth, viewportHeight, focusMetrics),
+    [viewportWidth, viewportHeight, focusMetrics]
+  )
   const [selectedNode, setSelectedNode] = useState(null)
   const [detailDismissing, setDetailDismissing] = useState(false)
   const [hoveredNode, setHoveredNode] = useState(null)
@@ -160,6 +166,9 @@ export default function App() {
   const mapGuideRectRef = useRef(null)
   const pendingJourneyNodeRef = useRef(null)
   const transitionTimerRef = useRef(null)
+  const hoveredNodeRef = useRef(null)
+  const hoverRafRef = useRef(null)
+  const searchDebounceRef = useRef(null)
   const focusModeActive = viewMode !== 'map'
   const focusLayoutActive = viewMode === 'focus' || viewMode === 'enteringFocus'
 
@@ -474,6 +483,16 @@ export default function App() {
     enterFocusMode(node)
   }, [enterFocusMode])
 
+  const handleNodeHover = useCallback((node) => {
+    hoveredNodeRef.current = node
+    if (!hoverRafRef.current) {
+      hoverRafRef.current = requestAnimationFrame(() => {
+        hoverRafRef.current = null
+        setHoveredNode(hoveredNodeRef.current)
+      })
+    }
+  }, [])
+
   const dismissDetailPanel = useCallback(() => {
     if (!selectedNode || viewMode !== 'map' || detailDismissing) return
     setDetailDismissing(true)
@@ -491,24 +510,27 @@ export default function App() {
   }, [viewMode, selectedNode, dismissDetailPanel])
 
   const handleSearch = useCallback((query) => {
-    if (!query.trim()) {
-      setSearchMatches(null)
-      return
-    }
-    const q = query.toLowerCase()
-    const matches = new Set(
-      nodes.filter(n => n.name.toLowerCase().includes(q)).map(n => n.id)
-    )
-    setSearchMatches(matches.size > 0 ? matches : new Set())
-
-    if (matches.size === 1 && graphRef) {
-      const matchId = [...matches][0]
-      const node = nodes.find(n => n.id === matchId)
-      const activeNode = getGraphNode(node)
-      if (activeNode?.x != null && activeNode?.y != null) {
-        selectNodeInMap(activeNode)
+    clearTimeout(searchDebounceRef.current)
+    searchDebounceRef.current = setTimeout(() => {
+      if (!query.trim()) {
+        setSearchMatches(null)
+        return
       }
-    }
+      const q = query.toLowerCase()
+      const matches = new Set(
+        nodes.filter(n => n.name.toLowerCase().includes(q)).map(n => n.id)
+      )
+      setSearchMatches(matches.size > 0 ? matches : new Set())
+
+      if (matches.size === 1 && graphRef) {
+        const matchId = [...matches][0]
+        const node = nodes.find(n => n.id === matchId)
+        const activeNode = getGraphNode(node)
+        if (activeNode?.x != null && activeNode?.y != null) {
+          selectNodeInMap(activeNode)
+        }
+      }
+    }, 120)
   }, [getGraphNode, graphRef, selectNodeInMap])
 
   const focusNeighbors = useMemo(() => {
@@ -625,7 +647,7 @@ export default function App() {
           hoveredNode={hoveredNode}
           searchMatches={searchMatches}
           onNodeClick={handleNodeClick}
-          onNodeHover={setHoveredNode}
+          onNodeHover={handleNodeHover}
           onBackgroundClick={handleBackgroundClick}
           onGraphReady={setGraphRef}
           width={mapViewport.width}

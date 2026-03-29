@@ -9,42 +9,38 @@ export default function DetailPanel({ node, graphRef, onClose, closing, maxX, ma
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [visible, setVisible] = useState(false)
 
-  function updatePosition() {
-    if (!graphRef || !node) return
-    const coords = graphRef.graph2ScreenCoords(node.x, node.y)
-    const panelWidth = 320
-    const panelHeight = 400
-    let x = coords.x + 20
-    let y = coords.y - 40
-
-    // Clamp to viewport
-    if (x + panelWidth > (maxX ?? window.innerWidth) - 16) {
-      x = coords.x - panelWidth - 20
-    }
-    if (y + panelHeight > (maxY ?? window.innerHeight) - 16) {
-      y = (maxY ?? window.innerHeight) - panelHeight - 16
-    }
-    if (y < 16) y = 16
-    if (x < 16) x = 16
-
-    setPosition({ x, y })
-  }
-
   useEffect(() => {
     if (!graphRef || !node) return
-    updatePosition()
     requestAnimationFrame(() => setVisible(true))
-    return () => setVisible(false)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [node, graphRef])
 
-  useEffect(() => {
-    if (!graphRef) return
-    // force-graph emits zoom events via onZoom prop, but we can also poll
-    const interval = setInterval(updatePosition, 100)
-    return () => clearInterval(interval)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graphRef, node])
+    let rafId
+    const tick = () => {
+      const coords = graphRef.graph2ScreenCoords(node.x, node.y)
+      const panelWidth = 320
+      const panelHeight = 400
+      let x = coords.x + 20
+      let y = coords.y - 40
+
+      // Clamp to viewport
+      if (x + panelWidth > (maxX ?? window.innerWidth) - 16) {
+        x = coords.x - panelWidth - 20
+      }
+      if (y + panelHeight > (maxY ?? window.innerHeight) - 16) {
+        y = (maxY ?? window.innerHeight) - panelHeight - 16
+      }
+      if (y < 16) y = 16
+      if (x < 16) x = 16
+
+      setPosition(prev => (prev.x === x && prev.y === y ? prev : { x, y }))
+      rafId = requestAnimationFrame(tick)
+    }
+    rafId = requestAnimationFrame(tick)
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      setVisible(false)
+    }
+  }, [node, graphRef, maxX, maxY])
 
   useEffect(() => {
     const handleKey = (e) => {
