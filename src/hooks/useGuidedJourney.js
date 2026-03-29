@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import {
   buildCompletionSummary,
   buildGuidedJourneyModel,
@@ -29,15 +29,14 @@ function readStoredJourneyState() {
 export default function useGuidedJourney({
   nodes,
   links,
-  graphRef,
   setSelectedNode,
   centerOnNode,
+  panelOpen = false,
 }) {
   const model = useMemo(() => buildGuidedJourneyModel(nodes, links), [links, nodes])
   const [journeyState, setJourneyState] = useState(() => (
     hydrateJourneyState(model, readStoredJourneyState())
   ))
-  const autoStartedRef = useRef(false)
 
   const currentNode = useMemo(
     () => (journeyState.currentNodeId ? model.nodeMap[journeyState.currentNodeId] ?? null : null),
@@ -67,20 +66,6 @@ export default function useGuidedJourney({
   }, [journeyState])
 
   useEffect(() => {
-    if (autoStartedRef.current || !graphRef) return
-    autoStartedRef.current = true
-
-    const timer = window.setTimeout(() => {
-      setJourneyState((current) => {
-        if (current.status !== 'idle') return current
-        return startJourney(model, current)
-      })
-    }, 50)
-
-    return () => window.clearTimeout(timer)
-  }, [graphRef, model])
-
-  useEffect(() => {
     if (!currentNode) {
       if (journeyState.status === 'complete') {
         setSelectedNode(null)
@@ -88,10 +73,11 @@ export default function useGuidedJourney({
       return
     }
     if (journeyState.status === 'complete' || journeyState.status === 'idle') return
+    if (!panelOpen) return
 
     setSelectedNode(currentNode)
     centerOnNode?.(currentNode)
-  }, [centerOnNode, currentNode, journeyState.status, setSelectedNode])
+  }, [centerOnNode, currentNode, journeyState.status, panelOpen, setSelectedNode])
 
   const start = useCallback(() => {
     setJourneyState((current) => startJourney(model, current))

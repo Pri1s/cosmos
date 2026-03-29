@@ -526,6 +526,8 @@ export default function App() {
     [focusLenses, activeLensId]
   )
 
+  const [journeyPanelOpen, setJourneyPanelOpen] = useState(false)
+
   const {
     journey,
     currentNode: currentJourneyNode,
@@ -541,11 +543,27 @@ export default function App() {
   } = useGuidedJourney({
     nodes,
     links,
-    graphRef,
     setSelectedNode,
     centerOnNode: centerJourneyNode,
+    panelOpen: journeyPanelOpen,
   })
   const journeyRunning = journey.status === 'active' || journey.status === 'paused'
+  const showJourneyPanel = journeyPanelOpen
+
+  const handleStartJourney = useCallback(() => {
+    startJourney()
+    setJourneyPanelOpen(true)
+  }, [startJourney])
+
+  const handleResumeJourney = useCallback(() => {
+    resumeJourney()
+    setJourneyPanelOpen(true)
+  }, [resumeJourney])
+
+  const handleRestartJourney = useCallback(() => {
+    restartJourney()
+    setJourneyPanelOpen(true)
+  }, [restartJourney])
 
   const handleContinueJourney = useCallback((nodeId) => {
     continueJourneyTo(nodeId)
@@ -561,7 +579,6 @@ export default function App() {
     if (!canSetJourneyCurrentFromNode(selectedNode.id)) return null
     return selectedNode
   }, [canSetJourneyCurrentFromNode, selectedNode])
-  const showJourneyPanel = journey.status !== 'idle' || Boolean(journeyCandidateNode)
   const floatingJourneyPanel = useFloatingPanel({
     enabled: showJourneyPanel,
     initialRect: appMetrics.journeyPanelInitialRect,
@@ -622,6 +639,8 @@ export default function App() {
             onSelect={enterFocusMode}
             searchMatches={searchMatches}
             nodes={nodes}
+            onJourneyOpen={() => setJourneyPanelOpen(true)}
+            journeyActive={journeyRunning}
           />
         )}
         {selectedNode && viewMode === 'map' && (
@@ -665,9 +684,9 @@ export default function App() {
         focusModeActive={focusModeActive}
         activeLens={activeLens}
         journeyStatus={journey.status}
-        onStartJourney={startJourney}
-        onResumeJourney={resumeJourney}
-        onRestartJourney={restartJourney}
+        onStartJourney={handleStartJourney}
+        onResumeJourney={handleResumeJourney}
+        onRestartJourney={handleRestartJourney}
         floating={true}
         floatingStyle={floatingGuidePanel.style}
         onDragStart={floatingGuidePanel.onDragStart}
@@ -679,12 +698,13 @@ export default function App() {
           journey={journey}
           currentNode={currentJourneyNode}
           recommendations={journeyRecommendations}
-          onStartJourney={startJourney}
+          onStartJourney={handleStartJourney}
           onContinueJourney={handleContinueJourney}
           onContinueToNode={continueJourneyTo}
           onPauseJourney={pauseJourney}
-          onResumeJourney={resumeJourney}
-          onRestartJourney={restartJourney}
+          onResumeJourney={handleResumeJourney}
+          onRestartJourney={handleRestartJourney}
+          onClose={() => setJourneyPanelOpen(false)}
           onMarkJourneyVisited={markJourneyVisited}
           onDiveDeeper={handleDiveDeeper}
           onSetJourneyCurrentFromNode={setJourneyCurrentFromNode}

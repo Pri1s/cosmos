@@ -14,6 +14,7 @@ export default function JourneyPanel({
   onDiveDeeper,
   onSetJourneyCurrentFromNode,
   candidateNode,
+  onClose,
   floating = false,
   floatingStyle,
   onDragStart,
@@ -40,9 +41,14 @@ export default function JourneyPanel({
           <div className="journey-panel__eyebrow">Guided Journey</div>
           <h3 className="journey-panel__title">{missionName}</h3>
         </div>
-        <div className="journey-panel__progress">
-          <span className="journey-panel__progress-value">{visitedLabel}</span>
-          <span className="journey-panel__progress-label">visited</span>
+        <div className="journey-panel__header-right">
+          <div className="journey-panel__progress">
+            <span className="journey-panel__progress-value">{visitedLabel}</span>
+            <span className="journey-panel__progress-label">visited</span>
+          </div>
+          {onClose && (
+            <button className="journey-panel__close" onClick={onClose} aria-label="Close journey panel">×</button>
+          )}
         </div>
       </div>
 
