@@ -5,33 +5,9 @@ const COLORS = {
   mission: '#f76e5e',
 }
 
-export default function DetailPanel({ node, graphRef, onClose }) {
+export default function DetailPanel({ node, graphRef, onClose, maxX }) {
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    if (!graphRef || !node) return
-    updatePosition()
-    requestAnimationFrame(() => setVisible(true))
-
-    return () => setVisible(false)
-  }, [node, graphRef])
-
-  useEffect(() => {
-    if (!graphRef) return
-    const handleZoom = () => updatePosition()
-    // force-graph emits zoom events via onZoom prop, but we can also poll
-    const interval = setInterval(updatePosition, 100)
-    return () => clearInterval(interval)
-  }, [graphRef, node])
-
-  useEffect(() => {
-    const handleKey = (e) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
-  }, [onClose])
 
   function updatePosition() {
     if (!graphRef || !node) return
@@ -42,7 +18,7 @@ export default function DetailPanel({ node, graphRef, onClose }) {
     let y = coords.y - 40
 
     // Clamp to viewport
-    if (x + panelWidth > window.innerWidth - 16) {
+    if (x + panelWidth > (maxX ?? window.innerWidth) - 16) {
       x = coords.x - panelWidth - 20
     }
     if (y + panelHeight > window.innerHeight - 16) {
@@ -53,6 +29,30 @@ export default function DetailPanel({ node, graphRef, onClose }) {
 
     setPosition({ x, y })
   }
+
+  useEffect(() => {
+    if (!graphRef || !node) return
+    updatePosition()
+    requestAnimationFrame(() => setVisible(true))
+    return () => setVisible(false)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [node, graphRef])
+
+  useEffect(() => {
+    if (!graphRef) return
+    // force-graph emits zoom events via onZoom prop, but we can also poll
+    const interval = setInterval(updatePosition, 100)
+    return () => clearInterval(interval)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [graphRef, node])
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [onClose])
 
   const color = COLORS[node.type]
 

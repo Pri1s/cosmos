@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import ForceGraph2D from 'react-force-graph-2d'
-import { forceX, forceY, forceCollide } from 'd3-force'
+import { forceCollide } from 'd3-force'
 import { nodes as sourceNodes, links as sourceLinks, getNeighborIds } from '../data/graph-data'
 import { drawNode, drawLink, drawStars, drawNebulae } from '../utils/render-helpers'
 import { assignSpiralPositions, forceSpiralShape } from '../utils/spiral-layout'
@@ -22,17 +22,14 @@ export default function BrainMap({
   onNodeHover,
   onBackgroundClick,
   onGraphReady,
+  width,
 }) {
   const fgRef = useRef()
   const [graphData] = useState(cloneGraphData)
-  const [dimensions, setDimensions] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  })
+  const [height, setHeight] = useState(window.innerHeight)
 
   useEffect(() => {
-    const handleResize = () =>
-      setDimensions({ width: window.innerWidth, height: window.innerHeight })
+    const handleResize = () => setHeight(window.innerHeight)
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
@@ -102,8 +99,8 @@ export default function BrainMap({
     <ForceGraph2D
       ref={fgRef}
       graphData={graphData}
-      width={dimensions.width}
-      height={dimensions.height}
+      width={width ?? window.innerWidth}
+      height={height}
       backgroundColor="#06080d"
       nodeCanvasObject={nodeCanvasObject}
       nodeCanvasObjectMode={() => 'replace'}

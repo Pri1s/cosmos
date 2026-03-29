@@ -1,3 +1,316 @@
+/* ---- App Layout ---- */
+.app-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.map-area {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ---- Guide Panel ---- */
+.guide-panel {
+  width: 380px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: rgba(8, 10, 18, 0.97);
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
+  height: 100vh;
+  overflow: hidden;
+}
+
+.guide-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.guide-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(168, 124, 247, 0.25), rgba(94, 196, 247, 0.1));
+  border: 1px solid rgba(168, 124, 247, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.guide-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.guide-name {
+  font-family: 'Instrument Serif', serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.guide-status {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Messages */
+.guide-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 16px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.guide-messages::-webkit-scrollbar {
+  width: 3px;
+}
+
+.guide-messages::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+}
+
+.guide-message {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.guide-message--stella {
+  align-items: flex-start;
+}
+
+.guide-message--user {
+  align-items: flex-end;
+}
+
+.guide-message-label {
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding-left: 2px;
+}
+
+.guide-message-text {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-primary);
+  border-radius: 10px;
+  padding: 10px 13px;
+  max-width: 92%;
+}
+
+.guide-message--stella .guide-message-text {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 3px 10px 10px 10px;
+}
+
+.guide-message--user .guide-message-text {
+  background: rgba(168, 124, 247, 0.12);
+  border: 1px solid rgba(168, 124, 247, 0.22);
+  border-radius: 10px 10px 3px 10px;
+}
+
+/* Typing dots */
+.guide-typing {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  min-height: 18px;
+}
+
+.guide-typing span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: guide-dot 1.2s ease-in-out infinite;
+}
+
+.guide-typing span:nth-child(2) { animation-delay: 0.2s; }
+.guide-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes guide-dot {
+  0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+
+/* Mini node card */
+.guide-nodecard {
+  margin: 4px 12px 0;
+  padding: 11px 13px;
+  border-radius: 10px;
+  border: 1px solid;
+  background: rgba(255, 255, 255, 0.03);
+  flex-shrink: 0;
+}
+
+.guide-nodecard-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.guide-nodecard-name {
+  font-family: 'Instrument Serif', serif;
+  font-size: 15px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.guide-nodecard-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 20px;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.guide-nodecard-stats {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.guide-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+.guide-stat-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.guide-stat-value {
+  font-size: 11px;
+  color: var(--text-primary);
+}
+
+/* Quick action chips */
+.guide-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 12px;
+  flex-shrink: 0;
+}
+
+.guide-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  color: var(--text-primary);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.guide-chip:hover:not(:disabled) {
+  background: rgba(168, 124, 247, 0.12);
+  border-color: rgba(168, 124, 247, 0.35);
+}
+
+.guide-chip:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Text input */
+.guide-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.guide-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  padding: 9px 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.guide-input:focus {
+  border-color: rgba(168, 124, 247, 0.45);
+}
+
+.guide-input::placeholder {
+  color: var(--text-muted);
+}
+
+.guide-input:disabled {
+  opacity: 0.45;
+}
+
+.guide-send {
+  width: 34px;
+  height: 34px;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.guide-send:hover:not(:disabled) {
+  opacity: 0.82;
+}
+
+.guide-send:disabled {
+  opacity: 0.28;
+  cursor: not-allowed;
+}
+
 :root {
   --bg: #06080d;
   --exoplanet: #5ec4f7;
