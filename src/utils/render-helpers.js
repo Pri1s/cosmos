@@ -32,7 +32,7 @@ export function drawStars(ctx, globalScale) {
   }
 }
 
-export function drawNebulae(ctx, globalScale) {
+export function drawNebulae(ctx) {
   // Galactic core glow at center
   const core = ctx.createRadialGradient(0, 0, 0, 0, 0, 120)
   core.addColorStop(0, 'rgba(180, 160, 220, 0.06)')
